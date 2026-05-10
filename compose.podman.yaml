@@ -1,0 +1,21 @@
+services:
+  roster:
+    image: ghcr.io/thebigtree/roster.thebigtree.life:latest
+    container_name: roster-thebigtree-life
+    restart: unless-stopped
+    environment:
+      ROSTER_HOSTNAME: roster.thebigtree.life
+      ROSTER_DATA_DIR: /data
+      PORT: "8500"
+    expose:
+      - "8500"
+    volumes:
+      - roster-data:/data:Z
+    labels:
+      traefik.enable: "true"
+      traefik.http.routers.roster.rule: Host(`roster.thebigtree.life`)
+      traefik.http.routers.roster.entrypoints: websecure
+      traefik.http.routers.roster.tls: "true"
+      traefik.http.services.roster.loadbalancer.server.port: "8500"
+volumes:
+  roster-data:

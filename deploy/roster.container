@@ -1,0 +1,24 @@
+[Unit]
+Description=roster.thebigtree.life container
+After=network-online.target
+Wants=network-online.target
+
+[Container]
+Image=ghcr.io/thebigtree/roster.thebigtree.life:latest
+ContainerName=roster-thebigtree-life
+Environment=ROSTER_HOSTNAME=roster.thebigtree.life
+Environment=ROSTER_DATA_DIR=/data
+Environment=PORT=8500
+Volume=roster-data.volume:/data:Z
+Label=traefik.enable=true
+Label=traefik.http.routers.roster.rule=Host(`roster.thebigtree.life`)
+Label=traefik.http.routers.roster.entrypoints=websecure
+Label=traefik.http.routers.roster.tls=true
+Label=traefik.http.services.roster.loadbalancer.server.port=8500
+
+[Service]
+Restart=always
+TimeoutStartSec=120
+
+[Install]
+WantedBy=multi-user.target
