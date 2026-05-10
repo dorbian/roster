@@ -1,0 +1,17 @@
+# Merge these sections into /opt/honsefarm/traefik/dynamic/routers.yml.
+# Traefik must be attached to the same Podman network as the game-roster container.
+
+http:
+  routers:
+    roster:
+      rule: "Host(`roster.thebigtree.life`)"
+      entryPoints: ["websecure"]
+      service: roster-svc
+      tls:
+        certResolver: letsencrypt
+
+  services:
+    roster-svc:
+      loadBalancer:
+        servers:
+          - url: "http://game-roster:8500"

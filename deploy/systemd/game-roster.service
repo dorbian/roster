@@ -1,0 +1,42 @@
+[Unit]
+Description=game-roster container for roster.thebigtree.life
+Documentation=file:/opt/groster/source/docs/DEPLOYMENT.md
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+EnvironmentFile=/opt/groster/config/game-roster.env
+
+ExecStartPre=/usr/bin/mkdir -p ${GROSTER_ROOT} ${GROSTER_SOURCE_DIR} ${GROSTER_DATA_DIR} ${GROSTER_CONFIG_DIR}
+ExecStartPre=/usr/bin/chown -R 10001:10001 ${GROSTER_DATA_DIR}
+ExecStartPre=-/usr/bin/podman rm -f ${ROSTER_CONTAINER_NAME}
+ExecStartPre=/bin/sh -c '/usr/bin/podman network exists "${PODMAN_NETWORK}" || /usr/bin/podman network create "${PODMAN_NETWORK}"'
+ExecStartPre=/usr/bin/podman pull ${ROSTER_IMAGE}
+
+ExecStart=/usr/bin/podman run \
+  --name ${ROSTER_CONTAINER_NAME} \
+  --network ${PODMAN_NETWORK} \
+  --log-driver journald \
+  --replace \
+  --rm \
+  --read-only \
+  --tmpfs /tmp:rw,noexec,nosuid,size=64m \
+  --security-opt no-new-privileges \
+  -e PORT=${ROSTER_PORT} \
+  -e ROSTER_HOSTNAME=${ROSTER_HOSTNAME} \
+  -e ROSTER_DATA_DIR=${ROSTER_DATA_DIR} \
+  -e SESSION_TTL_SECONDS=${SESSION_TTL_SECONDS} \
+  -v ${GROSTER_DATA_DIR}:${ROSTER_DATA_DIR}:Z \
+  ${ROSTER_IMAGE}
+
+ExecStop=/usr/bin/podman stop --ignore -t 20 ${ROSTER_CONTAINER_NAME}
+ExecStopPost=-/usr/bin/podman rm -f ${ROSTER_CONTAINER_NAME}
+
+Restart=always
+RestartSec=10
+TimeoutStartSec=180
+TimeoutStopSec=60
+
+[Install]
+WantedBy=multi-user.target

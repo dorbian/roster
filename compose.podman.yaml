@@ -1,7 +1,7 @@
 services:
   roster:
-    image: ghcr.io/thebigtree/roster.thebigtree.life:latest
-    container_name: roster-thebigtree-life
+    image: ghcr.io/dorbian/roster:latest
+    container_name: game-roster
     restart: unless-stopped
     environment:
       ROSTER_HOSTNAME: roster.thebigtree.life
@@ -10,12 +10,10 @@ services:
     expose:
       - "8500"
     volumes:
-      - roster-data:/data:Z
-    labels:
-      traefik.enable: "true"
-      traefik.http.routers.roster.rule: Host(`roster.thebigtree.life`)
-      traefik.http.routers.roster.entrypoints: websecure
-      traefik.http.routers.roster.tls: "true"
-      traefik.http.services.roster.loadbalancer.server.port: "8500"
-volumes:
-  roster-data:
+      - /opt/groster/data:/data:Z
+    networks:
+      - honsefarm
+
+networks:
+  honsefarm:
+    external: true

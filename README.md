@@ -15,7 +15,7 @@ This MVP intentionally does not use GamePoint authentication. Users create local
 - Bye balancing for uneven rosters.
 - Score entry per table.
 - Server-side automatic progression when all tables in the current round are submitted.
-- OCI-compatible container for Podman, Docker, Kubernetes, or systemd Quadlet.
+- OCI-compatible container for Podman, Docker, Kubernetes, Quadlet, or a direct systemd-managed Podman service.
 - GitHub Actions workflow for multi-arch GHCR image builds: amd64, arm64, and ppc64le.
 - Container listens on port `8500`; HTTPS is expected to terminate at Traefik.
 
@@ -47,7 +47,7 @@ podman compose -f compose.podman.yaml up -d
 ## Expected published image
 
 ```text
-ghcr.io/thebigtree/roster.thebigtree.life:latest
+ghcr.io/dorbian/roster:latest
 ```
 
 Change the image name in `.github/workflows/container.yml` if the repository is hosted under another owner/name.
@@ -60,4 +60,29 @@ SQLite database path:
 /data/roster.db
 ```
 
-Mount `/data` as a persistent Podman volume.
+For the target host deployment, mount `/opt/groster/data` to `/data` in the container. The downloaded or copied source tree should live under `/opt/groster/source`, and runtime configuration under `/opt/groster/config`.
+
+
+## Target deployment on 192.168.0.203
+
+The production-style single-host deployment uses `/opt/groster` as the only roster-owned host root:
+
+```text
+/opt/groster/source   application source
+/opt/groster/data     SQLite database and runtime data
+/opt/groster/config   systemd environment file
+```
+
+Install from an unpacked source zip:
+
+```bash
+sudo ./scripts/install-systemd-service.sh
+```
+
+The systemd service runs a Podman container named `game-roster` on the `honsefarm` Podman network. Traefik should route to the Podman DNS name, not the host IP:
+
+```yaml
+url: "http://game-roster:8500"
+```
+
+The installer does not modify Traefik. Your existing `/opt/honsefarm/traefik/dynamic/routers.yml` remains untouched. See `docs/DEPLOYMENT.md`; `deploy/traefik/roster-snippet.yml` is only a manual reference.
